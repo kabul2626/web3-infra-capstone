@@ -1,0 +1,49 @@
+name: ci-foundry
+
+on:
+  push:
+    paths:
+      - "contracts/**"
+      - ".github/workflows/ci-foundry.yml"
+  pull_request:
+    paths:
+      - "contracts/**"
+
+jobs:
+  test-contracts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Show versions
+        run: |
+          forge --version
+          cast --version
+          anvil --version
+
+      - name: Format check
+        working-directory: contracts
+        run: forge fmt --check
+
+      - name: Build
+        working-directory: contracts
+        run: forge build --sizes
+
+      - name: Test (fuzz + gas report)
+        working-directory: contracts
+        run: |
+          forge test -vvv --fuzz-runs 256 --gas-report | tee gas-report.txt
+
+      - name: Upload gas report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gas-report
+          path: contracts/gas-report.txt
