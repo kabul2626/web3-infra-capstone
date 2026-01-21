@@ -1,15 +1,19 @@
 name: deploy-contracts
 
 on:
-  # manual deploys from Actions tab
+  # Manual trigger from GitHub Actions UI
   workflow_dispatch:
     inputs:
-      verify:
-        description: "verify contracts on explorer"
+      dry_run:
+        description: "simulate deployment only (no broadcast, no ETH needed)"
         required: false
         default: "true"
+      verify:
+        description: "verify contracts on block explorer (requires API key)"
+        required: false
+        default: "false"
 
-  # deploy on versioned contract tags
+  # Optional: real deployments on versioned tags
   push:
     tags:
       - "contracts-v*"
@@ -18,35 +22,62 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # protected environment for keys + approvals
+    # Environment protects secrets and can require approvals
     environment: testnet
 
     steps:
+      # Checkout repo
       - uses: actions/checkout@v4
 
+      # Install Foundry toolchain
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
 
+      # Compile contracts
       - name: Build contracts
         working-directory: contracts
         run: forge build
 
-      - name: Deploy contracts
+      # -----------------------------
+      # DRY RUN (no ETH required)
+      # -----------------------------
+      - name: Deploy (dry run)
+        if: ${{ inputs.dry_run == 'true' }}
         working-directory: contracts
         env:
           RPC_URL: ${{ secrets.RPC_URL }}
           PRIVATE_KEY: ${{ secrets.DEPLOYER_PK }}
         run: |
+          echo "Running deploy script in simulation mode"
+          forge script script/Deploy.s.sol:Deploy \
+            --rpc-url "$RPC_URL" \
+            --private-key "$PRIVATE_KEY" \
+            -vvv
+
+      # -----------------------------
+      # REAL DEPLOY (requires ETH)
+      # -----------------------------
+      - name: Deploy (broadcast)
+        if: ${{ inputs.dry_run != 'true' }}
+        working-directory: contracts
+        env:
+          RPC_URL: ${{ secrets.RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.DEPLOYER_PK }}
+        run: |
+          echo "Broadcasting deployment transactions"
           forge script script/Deploy.s.sol:Deploy \
             --rpc-url "$RPC_URL" \
             --private-key "$PRIVATE_KEY" \
             --broadcast \
             -vvv
 
+      # -----------------------------
+      # OPTIONAL VERIFICATION
+      # -----------------------------
       - name: Verify contracts
-        if: ${{ inputs.verify == 'true' }}
+        if: ${{ inputs.verify == 'true' && inputs.dry_run != 'true' }}
         working-directory: contracts
         env:
           RPC_URL: ${{ secrets.RPC_URL }}
