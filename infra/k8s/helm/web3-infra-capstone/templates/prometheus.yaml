@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: {{ .Values.namespace }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+
+    rule_files:
+      - /etc/prometheus/alert.rules.yml
+
+    scrape_configs:
+      - job_name: "oracle-agent"
+        static_configs:
+          - targets: ["oracle-agent:8081"]
+      - job_name: "oracle-monitor"
+        static_configs:
+          - targets: ["oracle-monitor:8082"]
+  alert.rules.yml: |
+    groups:
+      - name: oracle-alerts
+        rules:
+          - alert: OracleMonitorNoUpdates
+            expr: time() - monitor_last_event_unix > 300
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "No oracle updates processed"
+              description: "Monitor has not ingested a PriceUpdated event for >5 minutes."
+          - alert: OracleAgentErrors
+            expr: rate(agent_price_update_failures_total[5m]) > 0
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Agent update failures detected"
+              description: "Agent is failing to submit updates in the last 5 minutes."
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: {{ .Values.images.prometheus }}
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus/
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+  type: {{ .Values.service.type }}

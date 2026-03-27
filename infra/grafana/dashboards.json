@@ -1,0 +1,40 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Agent Update Failures (rate)",
+      "targets": [
+        {
+          "expr": "rate(agent_price_update_failures_total[5m])",
+          "legendFormat": "failures"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Monitor Lag (seconds)",
+      "targets": [
+        {
+          "expr": "monitor_ingest_lag_seconds",
+          "legendFormat": "lag"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Prices Ingested",
+      "targets": [
+        {
+          "expr": "rate(monitor_prices_ingested_total[5m])",
+          "legendFormat": "ingest/s"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "title": "Oracle Stack Overview",
+  "version": 1
+}

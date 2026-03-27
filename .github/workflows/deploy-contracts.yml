@@ -1,0 +1,136 @@
+name: deploy-contracts
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "simulate deployment only (no broadcast, no ETH needed)"
+        required: false
+        default: "true"
+      verify:
+        description: "verify contracts on block explorer (requires API key)"
+        required: false
+        default: "false"
+
+  push:
+    tags:
+      - "contracts-v*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: testnet
+
+    steps:
+      # --------------------------------
+      # Checkout repo
+      # --------------------------------
+      - uses: actions/checkout@v4
+
+      # --------------------------------
+      # Install Foundry
+      # --------------------------------
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      # --------------------------------
+      # Validate secrets exist
+      # --------------------------------
+      - name: Validate secrets
+        env:
+          RPC_URL: ${{ secrets.RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.DEPLOYER_PK }}
+        run: |
+          if [ -z "$RPC_URL" ]; then
+            echo "❌ RPC_URL is missing"
+            exit 1
+          fi
+
+          if [ -z "$PRIVATE_KEY" ]; then
+            echo "❌ DEPLOYER_PK is missing"
+            exit 1
+          fi
+
+          echo "✅ Secrets detected"
+
+      # --------------------------------
+      # RPC Smoke Test (VERY IMPORTANT)
+      # --------------------------------
+      - name: RPC smoke test
+        working-directory: contracts
+        env:
+          RPC_URL: ${{ secrets.RPC_URL }}
+        run: |
+          echo "Checking RPC connectivity..."
+          echo "RPC length: ${#RPC_URL}"
+
+          cast chain-id --rpc-url "$RPC_URL"
+          cast block-number --rpc-url "$RPC_URL"
+
+          echo "✅ RPC reachable"
+
+      # --------------------------------
+      # Build contracts
+      # --------------------------------
+      - name: Build contracts
+        working-directory: contracts
+        run: forge build
+
+      # --------------------------------
+      # DRY RUN (no ETH required)
+      # --------------------------------
+      - name: Deploy (dry run)
+        if: ${{ inputs.dry_run == 'true' }}
+        working-directory: contracts
+        env:
+          RPC_URL: ${{ secrets.RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.DEPLOYER_PK }}
+        run: |
+          echo "Running deploy script in simulation mode"
+
+          forge script script/Deploy.s.sol:Deploy \
+            --rpc-url "$RPC_URL" \
+            --private-key "$PRIVATE_KEY" \
+            -vvv
+
+      # --------------------------------
+      # REAL DEPLOY (requires ETH)
+      # --------------------------------
+      - name: Deploy (broadcast)
+        if: ${{ inputs.dry_run != 'true' }}
+        working-directory: contracts
+        env:
+          RPC_URL: ${{ secrets.RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.DEPLOYER_PK }}
+        run: |
+          echo "Broadcasting deployment transactions"
+
+          forge script script/Deploy.s.sol:Deploy \
+            --rpc-url "$RPC_URL" \
+            --private-key "$PRIVATE_KEY" \
+            --broadcast \
+            -vvv
+
+      # # --------------------------------
+      # # OPTIONAL VERIFICATION
+      # # --------------------------------
+      # - name: Verify contracts
+      #   if: ${{ inputs.verify == 'true' && inputs.dry_run != 'true' }}
+      #   working-directory: contracts
+      #   env:
+      #     RPC_URL: ${{ secrets.RPC_URL }}
+      #     PRIVATE_KEY: ${{ secrets.DEPLOYER_PK }}
+      #     ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+      #   run: |
+      #     echo "Verifying contracts on block explorer"
+
+      #     forge script script/Deploy.s.sol:Deploy \
+      #       --rpc-url "$RPC_URL" \
+      #       --private-key "$PRIVATE_KEY" \
+      #       --broadcast \
+      #       --verify \
+      #       --etherscan-api-key "$ETHERSCAN_API_KEY" \
+      #       -vvv
+

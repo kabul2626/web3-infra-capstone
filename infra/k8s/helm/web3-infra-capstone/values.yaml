@@ -1,0 +1,40 @@
+namespace: web3-infra
+
+images:
+  anvil: "815591045885.dkr.ecr.eu-west-2.amazonaws.com/web3-infra-capstone-anvil:latest"
+  agent: "<ECR_AGENT_IMAGE>"
+  monitor: "<ECR_MONITOR_IMAGE>"
+  prometheus: "prom/prometheus:latest"
+  grafana: "grafana/grafana:latest"
+  postgres: "postgres:16"
+
+agent:
+  rpcUrl: "http://anvil:8545"
+  chainId: "31337"
+  privateKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+  oracleAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+  priceApiUrl: "https://api.coinbase.com/v2/prices/ETH-USD/spot"
+  priceScale: "100"
+  rateLimitRps: "0.2"
+  minUpdateInterval: "15s"
+  priceChangeThreshold: "0.01"
+  queueFile: "/tmp/agent-queue.jsonl"
+  retryMax: "5"
+  retryBaseDelay: "2s"
+
+monitor:
+  rpcUrl: "http://anvil:8545"
+  oracleAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+  dbUrl: "postgres://postgres:postgres@postgres:5432/oracle?sslmode=disable"
+  baseSymbol: "ETH"
+  quoteSymbol: "USD"
+  confirmations: "3"
+  reorgDepth: "5"
+  pollInterval: "10s"
+
+grafana:
+  adminUser: "admin"
+  adminPassword: "admin"
+
+service:
+  type: ClusterIP

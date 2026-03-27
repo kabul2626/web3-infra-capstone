@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oracle-agent
+  namespace: web3-infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle-agent
+  template:
+    metadata:
+      labels:
+        app: oracle-agent
+    spec:
+      containers:
+        - name: oracle-agent
+          image: <ECR_AGENT_IMAGE>
+          ports:
+            - containerPort: 8081
+          env:
+            - name: RPC_URL
+              value: http://anvil:8545
+            - name: CHAIN_ID
+              value: "31337"
+            - name: PRIVATE_KEY
+              value: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+            - name: ORACLE_ADDRESS
+              value: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+            - name: PRICE_API_URL
+              value: ""
+            - name: PRICE_SCALE
+              value: "100"
+            - name: RATE_LIMIT_RPS
+              value: "0.2"
+            - name: MIN_UPDATE_INTERVAL
+              value: "15s"
+            - name: PRICE_CHANGE_THRESHOLD
+              value: "0.01"
+            - name: QUEUE_FILE
+              value: "/tmp/agent-queue.jsonl"
+            - name: RETRY_MAX
+              value: "5"
+            - name: RETRY_BASE_DELAY
+              value: "2s"

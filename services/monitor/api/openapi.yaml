@@ -1,0 +1,67 @@
+openapi: 3.0.3
+info:
+  title: Oracle Monitor API
+  version: 1.0.0
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      responses:
+        "200":
+          description: OK
+  /prices:
+    get:
+      summary: List prices
+      parameters:
+        - in: query
+          name: base
+          schema: { type: string }
+        - in: query
+          name: quote
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100 }
+      responses:
+        "200":
+          description: Prices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Price"
+  /prices/latest:
+    get:
+      summary: Latest price
+      parameters:
+        - in: query
+          name: base
+          schema: { type: string }
+        - in: query
+          name: quote
+          schema: { type: string }
+      responses:
+        "200":
+          description: Latest price
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Price"
+components:
+  schemas:
+    Price:
+      type: object
+      properties:
+        base: { type: string }
+        quote: { type: string }
+        price: { type: string }
+        timestamp: { type: string, format: date-time }
+        tx_hash: { type: string }
+        block: { type: integer }

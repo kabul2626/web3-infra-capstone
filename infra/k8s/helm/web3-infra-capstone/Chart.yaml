@@ -1,0 +1,6 @@
+apiVersion: v2
+name: web3-infra-capstone
+description: Web3 infra stack (anvil, agent, prometheus, grafana)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

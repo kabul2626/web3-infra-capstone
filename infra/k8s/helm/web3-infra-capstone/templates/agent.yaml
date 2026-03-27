@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oracle-agent
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle-agent
+  template:
+    metadata:
+      labels:
+        app: oracle-agent
+    spec:
+      containers:
+        - name: oracle-agent
+          image: {{ .Values.images.agent }}
+          ports:
+            - containerPort: 8081
+          env:
+            - name: RPC_URL
+              value: {{ .Values.agent.rpcUrl | quote }}
+            - name: CHAIN_ID
+              value: {{ .Values.agent.chainId | quote }}
+            - name: PRIVATE_KEY
+              value: {{ .Values.agent.privateKey | quote }}
+            - name: ORACLE_ADDRESS
+              value: {{ .Values.agent.oracleAddress | quote }}
+            - name: PRICE_API_URL
+              value: {{ .Values.agent.priceApiUrl | quote }}
+            - name: PRICE_SCALE
+              value: {{ .Values.agent.priceScale | quote }}
+            - name: RATE_LIMIT_RPS
+              value: {{ .Values.agent.rateLimitRps | quote }}
+            - name: MIN_UPDATE_INTERVAL
+              value: {{ .Values.agent.minUpdateInterval | quote }}
+            - name: PRICE_CHANGE_THRESHOLD
+              value: {{ .Values.agent.priceChangeThreshold | quote }}
+            - name: QUEUE_FILE
+              value: {{ .Values.agent.queueFile | quote }}
+            - name: RETRY_MAX
+              value: {{ .Values.agent.retryMax | quote }}
+            - name: RETRY_BASE_DELAY
+              value: {{ .Values.agent.retryBaseDelay | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle-agent
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: oracle-agent
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+  type: {{ .Values.service.type }}

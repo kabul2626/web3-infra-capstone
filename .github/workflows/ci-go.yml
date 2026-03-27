@@ -1,0 +1,42 @@
+name: ci-go
+
+on:
+  push:
+    paths:
+      - "services/**"
+      - ".github/workflows/ci-go.yml"
+  pull_request:
+    paths:
+      - "services/**"
+
+jobs:
+  test-go:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [agent, monitor]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+
+      - name: Go mod download
+        working-directory: services/${{ matrix.service }}
+        run: go mod download
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.60.3
+          working-directory: services/${{ matrix.service }}
+
+      - name: Test
+        working-directory: services/${{ matrix.service }}
+        run: go test ./... -race -coverprofile=coverage.out
+
+      - name: Build
+        working-directory: services/${{ matrix.service }}
+        run: go build ./cmd/${{ matrix.service }}

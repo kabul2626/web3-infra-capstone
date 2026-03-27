@@ -1,0 +1,19 @@
+groups:
+  - name: oracle-alerts
+    rules:
+      - alert: OracleMonitorNoUpdates
+        expr: time() - monitor_last_event_unix > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No oracle updates processed"
+          description: "Monitor has not ingested a PriceUpdated event for >5 minutes."
+      - alert: OracleAgentErrors
+        expr: rate(agent_price_update_failures_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Agent update failures detected"
+          description: "Agent is failing to submit updates in the last 5 minutes."

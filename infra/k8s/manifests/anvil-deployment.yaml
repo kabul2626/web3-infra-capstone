@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anvil
+  namespace: web3-infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anvil
+  template:
+    metadata:
+      labels:
+        app: anvil
+    spec:
+      containers:
+        - name: anvil
+          image: 815591045885.dkr.ecr.eu-west-2.amazonaws.com/web3-infra-capstone-anvil:latest
+          ports:
+            - containerPort: 8545
+          command: ["anvil"]
+          args: ["--host", "0.0.0.0", "--port", "8545"]

@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oracle-monitor
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle-monitor
+  template:
+    metadata:
+      labels:
+        app: oracle-monitor
+    spec:
+      containers:
+        - name: oracle-monitor
+          image: {{ .Values.images.monitor }}
+          ports:
+            - containerPort: 8082
+          env:
+            - name: RPC_URL
+              value: {{ .Values.monitor.rpcUrl | quote }}
+            - name: ORACLE_ADDRESS
+              value: {{ .Values.monitor.oracleAddress | quote }}
+            - name: DB_URL
+              value: {{ .Values.monitor.dbUrl | quote }}
+            - name: BASE_SYMBOL
+              value: {{ .Values.monitor.baseSymbol | quote }}
+            - name: QUOTE_SYMBOL
+              value: {{ .Values.monitor.quoteSymbol | quote }}
+            - name: CONFIRMATIONS
+              value: {{ .Values.monitor.confirmations | quote }}
+            - name: REORG_DEPTH
+              value: {{ .Values.monitor.reorgDepth | quote }}
+            - name: POLL_INTERVAL
+              value: {{ .Values.monitor.pollInterval | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oracle-monitor
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: oracle-monitor
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+  type: {{ .Values.service.type }}

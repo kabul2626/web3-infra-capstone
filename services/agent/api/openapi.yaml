@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: Oracle Agent API
+  version: 1.0.0
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      responses:
+        "200":
+          description: OK
+  /admin/trigger:
+    post:
+      summary: Trigger a price update
+      parameters:
+        - in: query
+          name: price
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transaction submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tx_hash: { type: string }
+                  block: { type: integer }
+                  status: { type: integer }
+                  new_price: { type: string }
+components:
+  schemas: {}

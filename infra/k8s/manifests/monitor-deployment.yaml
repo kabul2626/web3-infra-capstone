@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oracle-monitor
+  namespace: web3-infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle-monitor
+  template:
+    metadata:
+      labels:
+        app: oracle-monitor
+    spec:
+      containers:
+        - name: oracle-monitor
+          image: <ECR_MONITOR_IMAGE>
+          ports:
+            - containerPort: 8082
+          env:
+            - name: RPC_URL
+              value: http://anvil:8545
+            - name: ORACLE_ADDRESS
+              value: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+            - name: DB_URL
+              value: postgres://postgres:postgres@postgres:5432/oracle?sslmode=disable
+            - name: BASE_SYMBOL
+              value: ETH
+            - name: QUOTE_SYMBOL
+              value: USD
+            - name: CONFIRMATIONS
+              value: "3"
+            - name: REORG_DEPTH
+              value: "5"
+            - name: POLL_INTERVAL
+              value: "10s"
