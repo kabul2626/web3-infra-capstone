@@ -1,0 +1,79 @@
+version: "3.9"
+
+services:
+  anvil:
+    build: ./web3-infra-capstone/infra
+    container_name: anvil
+    ports:
+      - "8545:8545"
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: oracle
+    ports:
+      - "5432:5432"
+
+  agent:
+    build:
+      context: ./web3-infra-capstone/services/agent
+    container_name: oracle-agent
+    depends_on:
+      - anvil
+    environment:
+      RPC_URL: http://anvil:8545
+      CHAIN_ID: 31337
+      PRIVATE_KEY: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+      ORACLE_ADDRESS: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+      PRICE_API_URL: "https://api.coincap.io/v2/assets/ethereum"
+      PRICE_SCALE: 100
+      RATE_LIMIT_RPS: 0.2
+      MIN_UPDATE_INTERVAL: 15s
+      PRICE_CHANGE_THRESHOLD: 0.01
+      QUEUE_FILE: /tmp/agent-queue.jsonl
+      RETRY_MAX: 5
+      RETRY_BASE_DELAY: 2s
+    ports:
+      - "8081:8081"
+
+  monitor:
+    build:
+      context: ./web3-infra-capstone/services/monitor
+    container_name: oracle-monitor
+    depends_on:
+      - anvil
+      - postgres
+    environment:
+      RPC_URL: http://anvil:8545
+      ORACLE_ADDRESS: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+      DB_URL: postgres://postgres:postgres@postgres:5432/oracle?sslmode=disable
+      BASE_SYMBOL: ETH
+      QUOTE_SYMBOL: USD
+      CONFIRMATIONS: 3
+      REORG_DEPTH: 5
+      POLL_INTERVAL: 10s
+    ports:
+      - "8082:8082"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    depends_on:
+      - agent
+      - monitor
+    volumes:
+      - ./web3-infra-capstone/infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./web3-infra-capstone/infra/prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"

@@ -1,0 +1,9 @@
+.gomodcache/
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/cache/
+**/broadcast/
+.env
+.env.*
+node_modules/
+dist/
