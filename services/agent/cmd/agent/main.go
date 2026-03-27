@@ -1,3 +1,7 @@
+// Package main implements the price oracle agent service.
+// It fetches external price data, validates against thresholds,
+// and submits price updates to the PriceOracle smart contract.
+// Features include rate limiting, retry logic, queue persistence, and Prometheus metrics.
 package main
 
 import (

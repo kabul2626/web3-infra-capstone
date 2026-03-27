@@ -1,7 +1,11 @@
+// Terraform configuration for AWS infrastructure provisioning.
+// Provisions EKS cluster, VPC, ECR repositories, and related AWS resources.
+
 provider "aws" {
   region = var.region
 }
 
+// Local variables for consistent naming and tagging across resources
 locals {
   name = var.cluster_name
   tags = {
@@ -9,8 +13,10 @@ locals {
   }
 }
 
+// Fetch available AZs in the region for multi-AZ deployment
 data "aws_availability_zones" "available" {}
 
+// VPC module: creates networking infrastructure with public subnets in 2 AZs
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
@@ -29,6 +35,7 @@ module "vpc" {
   tags = local.tags
 }
 
+// EKS module: creates managed Kubernetes cluster with auto-scaling node groups
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
@@ -48,7 +55,7 @@ module "eks" {
       max_size     = var.node_max_size
 
       instance_types = [var.node_instance_type]
-      capacity_type  = "SPOT"
+      capacity_type  = "SPOT"  // Use spot instances to reduce costs
       subnet_ids     = module.vpc.public_subnets
     }
   }
@@ -56,6 +63,7 @@ module "eks" {
   tags = local.tags
 }
 
+// ECR repositories for storing Docker images of the project's services
 resource "aws_ecr_repository" "repos" {
   for_each = toset([
     "web3-infra-capstone-agent",
@@ -64,9 +72,10 @@ resource "aws_ecr_repository" "repos" {
   ])
 
   name                 = each.value
-  image_tag_mutability = "MUTABLE"
-  force_delete         = true
+  image_tag_mutability = "MUTABLE"  // Allow image tag overwrites
+  force_delete         = true        // Allow deletion even with images
 
+  // Enable automatic vulnerability scanning on image push
   image_scanning_configuration {
     scan_on_push = true
   }

@@ -1,3 +1,7 @@
+// Package main implements the price monitor service.
+// It subscribes to PriceUpdated events from the smart contract,
+// stores them in PostgreSQL, and exposes historical price queries via REST API.
+// Features include reorg handling, confirmation counting, and real-time ingestion metrics.
 package main
 
 import (
