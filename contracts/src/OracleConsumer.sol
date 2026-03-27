@@ -15,8 +15,8 @@ contract OracleConsumer {
     error PriceUnavailable();
     error PriceTooOld(uint256 updatedAt, uint256 checkedAt);
 
-    OracleView public oracle;          // Reference to the PriceOracle contract
-    uint256 public maxDelay;           // Maximum acceptable price age in seconds
+    OracleView public oracle; // Reference to the PriceOracle contract
+    uint256 public maxDelay; // Maximum acceptable price age in seconds
 
     constructor(address oracleAddress, uint256 maxDelaySeconds) {
         oracle = OracleView(oracleAddress);

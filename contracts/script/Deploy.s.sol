@@ -20,8 +20,7 @@ contract Deploy is Script {
         PriceOracle oracle = new PriceOracle();
 
         // Deploy the consumer with a 60-second freshness window
-        OracleConsumer consumer =
-            new OracleConsumer(address(oracle), 60);
+        OracleConsumer consumer = new OracleConsumer(address(oracle), 60);
 
         // Stop broadcasting transactions
         vm.stopBroadcast();
