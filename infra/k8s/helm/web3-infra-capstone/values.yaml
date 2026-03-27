@@ -14,8 +14,8 @@ images:
 agent:
   rpcUrl: "http://anvil:8545"
   chainId: "31337"
-  privateKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-  oracleAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+  privateKey: "<REPLACE_WITH_DEPLOYER_PRIVATE_KEY>"
+  oracleAddress: "<REPLACE_WITH_ORACLE_CONTRACT_ADDRESS>"
   priceApiUrl: "https://api.coinbase.com/v2/prices/ETH-USD/spot"
   priceScale: "100"
   rateLimitRps: "0.2"
@@ -28,8 +28,8 @@ agent:
 # Monitor service configuration (indexes blockchain events, stores prices)
 monitor:
   rpcUrl: "http://anvil:8545"
-  oracleAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-  dbUrl: "postgres://postgres:postgres@postgres:5432/oracle?sslmode=disable"
+  oracleAddress: "<REPLACE_WITH_ORACLE_CONTRACT_ADDRESS>"
+  dbUrl: "postgres://<POSTGRES_USER>:<POSTGRES_PASSWORD>@postgres:5432/oracle?sslmode=disable"
   baseSymbol: "ETH"         # Base asset symbol
   quoteSymbol: "USD"        # Quote asset symbol
   confirmations: "3"        # Wait for N blocks before indexing
