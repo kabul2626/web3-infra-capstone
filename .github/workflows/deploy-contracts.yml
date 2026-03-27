@@ -1,3 +1,4 @@
+# Deploy smart contracts to blockchain (testnet or mainnet)
 name: deploy-contracts
 
 on:

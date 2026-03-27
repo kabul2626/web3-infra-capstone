@@ -1,5 +1,7 @@
+# Build and push service images to container registry on release
 name: release-services
 
+# Trigger on manual dispatch or version tag push
 on:
   workflow_dispatch:
   push:

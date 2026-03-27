@@ -1,13 +1,16 @@
+# Kubernetes namespace for all resources
 namespace: web3-infra
 
+# Container image references
 images:
   anvil: "815591045885.dkr.ecr.eu-west-2.amazonaws.com/web3-infra-capstone-anvil:latest"
-  agent: "<ECR_AGENT_IMAGE>"
-  monitor: "<ECR_MONITOR_IMAGE>"
-  prometheus: "prom/prometheus:latest"
-  grafana: "grafana/grafana:latest"
-  postgres: "postgres:16"
+  agent: "<ECR_AGENT_IMAGE>"          # Price fetcher service image
+  monitor: "<ECR_MONITOR_IMAGE>"      # Event indexer service image
+  prometheus: "prom/prometheus:latest" # Metrics collection
+  grafana: "grafana/grafana:latest"   # Metrics visualization
+  postgres: "postgres:16"             # Price storage database
 
+# Agent service configuration (fetches prices, submits to smart contract)
 agent:
   rpcUrl: "http://anvil:8545"
   chainId: "31337"
@@ -19,22 +22,25 @@ agent:
   minUpdateInterval: "15s"
   priceChangeThreshold: "0.01"
   queueFile: "/tmp/agent-queue.jsonl"
-  retryMax: "5"
-  retryBaseDelay: "2s"
+  retryMax: "5"             # Max retries for failed submissions
+  retryBaseDelay: "2s"      # Base delay before exponential backoff
 
+# Monitor service configuration (indexes blockchain events, stores prices)
 monitor:
   rpcUrl: "http://anvil:8545"
   oracleAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
   dbUrl: "postgres://postgres:postgres@postgres:5432/oracle?sslmode=disable"
-  baseSymbol: "ETH"
-  quoteSymbol: "USD"
-  confirmations: "3"
-  reorgDepth: "5"
-  pollInterval: "10s"
+  baseSymbol: "ETH"         # Base asset symbol
+  quoteSymbol: "USD"        # Quote asset symbol
+  confirmations: "3"        # Wait for N blocks before indexing
+  reorgDepth: "5"           # Handle up to N block reorg depth
+  pollInterval: "10s"       # Check for new events every N seconds
 
+# Grafana dashboard login credentials
 grafana:
   adminUser: "admin"
   adminPassword: "admin"
 
+# Service exposure type (ClusterIP = internal only)
 service:
   type: ClusterIP

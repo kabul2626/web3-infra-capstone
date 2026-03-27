@@ -1,5 +1,7 @@
+# Continuous Integration workflow for Solidity contracts
 name: ci-foundry
 
+# Trigger on changes to contracts or this workflow file
 on:
   push:
     paths:

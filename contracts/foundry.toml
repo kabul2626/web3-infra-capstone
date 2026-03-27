@@ -1,6 +1,7 @@
+# Foundry configuration for Solidity project
 [profile.default]
-src = "src"
-out = "out"
-libs = ["lib"]
+src = "src"       # Source code directory
+out = "out"       # Build output directory
+libs = ["lib"]    # Library dependencies (forge-std)
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+# Full config reference: https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

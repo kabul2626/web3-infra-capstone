@@ -1,3 +1,4 @@
+# Helm chart for deploying web3 price oracle to Kubernetes
 apiVersion: v2
 name: web3-infra-capstone
 description: Web3 infra stack (anvil, agent, prometheus, grafana)

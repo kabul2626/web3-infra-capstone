@@ -1,5 +1,7 @@
+# Manual deployment workflow to push to EKS cluster
 name: deploy-services
 
+# Trigger manually with image tag input
 on:
   workflow_dispatch:
     inputs:

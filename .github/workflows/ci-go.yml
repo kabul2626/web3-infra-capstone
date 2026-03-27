@@ -1,5 +1,7 @@
+# Continuous Integration workflow for Go services
 name: ci-go
 
+# Trigger on changes to services or this workflow file
 on:
   push:
     paths:
@@ -19,7 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
           go-version: "1.25.x"
 
