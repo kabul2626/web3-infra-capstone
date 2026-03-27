@@ -1,6 +1,7 @@
 .gomodcache/
 **/terraform.tfstate
 **/terraform.tfstate.backup
+**/.terraform/
 **/cache/
 **/broadcast/
 .env
