@@ -33,7 +33,7 @@ contract OracleConsumerTest is Test {
         oracle.updatePrice(2000);
 
         vm.warp(1000);
-        vm.expectRevert(OracleConsumer.PriceTooOld.selector);
+        vm.expectRevert(abi.encodeWithSelector(OracleConsumer.PriceTooOld.selector, 100, 1000));
         consumer.getLatestPrice();
     }
 }
