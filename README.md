@@ -40,40 +40,70 @@ For AWS/Kubernetes deployment, set these GitHub Secrets:
 
 ## Architecture Overview
 
-This project is built as a full-stack oracle system with three main layers:
+This project is a complete oracle pipeline from external price feeds into on-chain price data and observability:
 
 1. **Smart contracts** (`contracts/`)
-   - `PriceOracle.sol`: on-chain oracle storage and permissioned price updates.
-   - `OracleConsumer.sol`: example consumer contract that reads and validates prices.
-   - Foundry tests ensure contract behavior and CI quality.
+   - `PriceOracle.sol`: stores the latest oracle price and timestamp on-chain.
+   - `OracleConsumer.sol`: example consumer contract that reads the oracle and enforces price freshness.
+   - `contracts/test/` and `contracts/src/` contain Foundry tests to validate contract behavior before deployment.
 
-2. **Agent and monitor services** (`services/`)
-   - `services/agent`: fetches price feeds from external providers, validates values, and writes updates to the on-chain oracle.
-   - `services/monitor`: listens for contract events, indexes oracle activity, and exposes internal metrics.
-   - Both services are built in Go, with OpenAPI definitions and production-ready Dockerfiles.
+2. **Agent service** (`services/agent`)
+   - Fetches price data from external providers.
+   - Validates the feed against configured thresholds.
+   - Submits `updatePrice()` transactions to `PriceOracle`.
+   - Runs as a container in local and Kubernetes environments.
 
-3. **Infrastructure** (`infra/`)
-   - `infra/terraform/aws/`: Terraform code for AWS infrastructure provisioning, including the Kubernetes cluster and supporting cloud resources.
-   - `infra/k8s/`: Kubernetes manifests and Helm charts used to deploy the local and cloud environment.
-   - `infra/prometheus/` and `infra/grafana/`: monitoring configuration for observability.
+3. **Monitor service** (`services/monitor`)
+   - Listens for `PriceUpdated` events emitted by `PriceOracle`.
+   - Stores event data and derived state in Postgres.
+   - Exposes metrics for Prometheus and health endpoints for service monitoring.
 
-## How it works
+4. **Infrastructure** (`infra/`)
+   - `infra/terraform/aws/`: defines AWS resources for production deployment.
+   - `infra/k8s/`: Kubernetes manifests and Helm charts for deploying the full stack.
+   - `infra/prometheus/` and `infra/grafana/`: observability configuration for metrics and dashboards.
 
-- In local development, `docker compose up --build` brings up Anvil, the agent, the monitor, Postgres, Prometheus, and Grafana.
-- The agent service polls external price providers, validates the feed, and calls `PriceOracle.updatePrice()` on the deployed contract.
-- The monitor service watches blockchain events and stores indexable data in Postgres, while also exposing Prometheus metrics.
-- The `PriceOracle` contract stores the latest price and timestamp; consumers can safely query `OracleConsumer` to ensure prices are fresh and available.
+## End-to-end flow
+
+1. **Bootstrap environment**
+   - Local: run `docker compose up --build` to launch Anvil, agent, monitor, Postgres, Prometheus, and Grafana.
+   - Production: provision cloud resources with Terraform and deploy services to Kubernetes.
+
+2. **Contract deployment**
+   - Deploy `PriceOracle` and optionally `OracleConsumer` using `forge script`.
+   - The deployed oracle contract address is provided to the agent and consumer services.
+
+3. **Data ingestion**
+   - The agent polls external price feeds on a schedule.
+   - It validates each feed before submitting a transaction to the oracle.
+   - Successful updates produce a `PriceUpdated` event on-chain.
+
+4. **On-chain storage**
+   - `PriceOracle` saves the latest price and timestamp.
+   - Consumers can call `OracleConsumer.getLatestPrice()` to read and verify the price is not stale.
+
+5. **Event monitoring and indexing**
+   - The monitor service consumes blockchain events from the oracle contract.
+   - It writes structured records to Postgres for querying and auditing.
+   - It also exports Prometheus metrics for price update frequency, error rates, and service health.
+
+6. **Observability and alerting**
+   - Prometheus scrapes metrics from the agent and monitor.
+   - Grafana dashboards visualize price feed status, update cadence, and system health.
+   - Alerts can be configured using the Prometheus rules in `infra/prometheus/alert.rules.yml`.
 
 ## Terraform and Kubernetes
 
-- The Terraform configuration in `infra/terraform/aws/` is responsible for provisioning AWS resources required for a production deployment.
-- Kubernetes manifests in `infra/k8s/manifests/` define the runtime components, including:
-  - `agent` and `monitor` services
-  - `anvil` (local Ethereum node for development)
-  - `postgres` database
-  - `prometheus` and `grafana` for observability
-- A Helm chart is available under `infra/k8s/helm/web3-infra-capstone/` for configurable deployments.
-- The GitHub workflows deploy services and contracts using the same infrastructure configuration when targeting cloud environments.
+- Terraform in `infra/terraform/aws/` provisions the AWS infrastructure for production deployments.
+- Kubernetes manifests in `infra/k8s/manifests/` describe the runtime services:
+  - `agent`
+  - `monitor`
+  - `postgres`
+  - `prometheus`
+  - `grafana`
+  - `anvil` (local development only)
+- A Helm chart under `infra/k8s/helm/web3-infra-capstone/` enables configurable deployment values.
+- GitHub workflows use the repository’s infrastructure and deployment definitions for CI/CD.
 
 ## Security Notes
 
